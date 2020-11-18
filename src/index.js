@@ -1,18 +1,53 @@
-// Test import of a JavaScript function
-import {example} from './js/example'
+import { combineLatest } from 'rxjs';
+import { map, pluck } from 'rxjs/operators';
+import { add, read, readAll } from './db';
 
-// Test import of an asset
-import webpackLogo from './images/webpack-logo.svg'
+const Rx = require('rxjs');
 
-// Test import of styles
-import './styles/index.scss'
+const i1 = document.querySelector('#i1');
+const i2 = document.querySelector('#i2');
+const button = document.querySelector('button');
 
-// Appending to the DOM
-const logo = document.createElement('img')
-logo.src = webpackLogo
+const obs1 = Rx.fromEvent(i1, 'input');
+const obs2 = Rx.fromEvent(i2, 'input');
+let id = 1;
 
-const heading = document.createElement('h1')
-heading.textContent = example()
+combineLatest(
+    obs1.pipe(
+        pluck('target', 'value')
+    ),
+    obs2.pipe(
+        pluck('target', 'value')
+    )
+)
+    .pipe(
+        map((a) => a.join(' ').trim())
+    )
+    .subscribe({
+        next(value) {
+            document.querySelector('#result').textContent = value;
+            button.disabled = !value;
+        }
+    })
 
-const app = document.querySelector('#root')
-app.append(logo, heading)
+const buscarTodos = () => {
+    readAll().then((resultado) => {
+        id = resultado.length + 1;
+        const html = resultado.map((r) => {
+            return `<tr>
+                        <td>${r.id}</td>
+                        <td>${r.name}</td>
+                    </tr>`;
+        }).join('');
+        document.querySelector('table tbody').innerHTML = html;
+    });
+}
+
+Rx.fromEvent(button, 'click')
+    .subscribe({
+        next() {
+            add({ id: id++, name: `${i1.value} ${i2.value}` }).then(buscarTodos)
+        }
+    });
+
+buscarTodos();
