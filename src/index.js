@@ -51,3 +51,16 @@ Rx.fromEvent(button, 'click')
     });
 
 buscarTodos();
+
+(async () => {
+    const cache = await caches.open('teste');
+    cache.add('./assets/data.json');
+
+    for (const request of await cache.keys()) {
+        //Apesar das quatro chamadas, deve aparecer a requisição somente uma vez no navegadors
+        console.log(await (await cache.match(request)).json())
+        console.log(await (await cache.match(request)).json())
+        console.log(await (await cache.match(request)).json())
+        console.log(await (await cache.match(request)).json())
+    }
+})();
